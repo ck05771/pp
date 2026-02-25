@@ -4,16 +4,12 @@ import matplotlib.pyplot as plt
 import os
 
 # ─────────────────────────────────────────────
-# PAGE CONFIG
+# CONFIG
 # ─────────────────────────────────────────────
-st.set_page_config(
-    page_title="DataFlow Builder",
-    layout="wide",
-    page_icon="🧩"
-)
+st.set_page_config(page_title="DataFlow", layout="wide", page_icon="🚀")
 
 # ─────────────────────────────────────────────
-# BUILDER + DARK SAAS UI
+# DARK SAAS STYLE
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -23,18 +19,19 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* Background */
+/* ───────── Background ───────── */
 .stApp {
     background: radial-gradient(circle at 10% 10%, #0f172a, #0b1220 60%);
     color: #e5e7eb;
 }
 
-/* Sidebar */
+/* ───────── Sidebar Builder Panel ───────── */
 section[data-testid="stSidebar"] {
     background: #0f172a;
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 
+/* Sidebar Section Titles */
 .sidebar-title {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -44,7 +41,7 @@ section[data-testid="stSidebar"] {
     margin-bottom: .5rem;
 }
 
-/* Topbar */
+/* ───────── Top Control Bar ───────── */
 .topbar-dark {
     background: #0b1220;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -55,7 +52,7 @@ section[data-testid="stSidebar"] {
     align-items: center;
 }
 
-/* Canvas */
+/* ───────── Canvas Card ───────── */
 .canvas-card {
     background: #111827;
     border: 1px solid rgba(255,255,255,0.05);
@@ -64,7 +61,7 @@ section[data-testid="stSidebar"] {
     box-shadow: 0 15px 40px rgba(0,0,0,0.4);
 }
 
-/* KPI */
+/* ───────── KPI ───────── */
 .kpi {
     background: linear-gradient(145deg,#111827,#0f172a);
     border: 1px solid rgba(255,255,255,0.05);
@@ -84,6 +81,7 @@ section[data-testid="stSidebar"] {
     font-weight: 800;
 }
 
+/* Buttons */
 .stButton > button {
     background: linear-gradient(90deg,#6366f1,#8b5cf6);
     border: none;
@@ -94,64 +92,54 @@ section[data-testid="stSidebar"] {
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# TOP CONTROL BAR
-# ─────────────────────────────────────────────
-st.markdown("""
-<div class="topbar-dark">
-    <div style="font-weight:600;">🧩 DataFlow Builder</div>
-    <div style="font-size:0.8rem;color:#94a3b8;">
-        Desktop · 1200px · Production Mode
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-# SAFE DATA LOADER
+# SAFE DATA LOADER (รองรับหลาย schema)
 # ─────────────────────────────────────────────
 def load_data():
     fp = "sales_data.csv"
 
+    # ถ้าไม่มีไฟล์ สร้าง default
     if not os.path.exists(fp):
         pd.DataFrame({
-            "Date": ["2023-01-15","2023-02-20","2023-03-10"],
-            "Product_ID": ["P001","P002","P003"],
-            "Product Name": ["Laptop","Mouse","Keyboard"],
-            "Category": ["IT","IT","IT"],
-            "Quantity": [10,50,30],
-            "Unit Price": [25000,500,800],
-            "Region": ["North","South","Central"]
-        }).to_csv(fp, index=False)
+            "Date":["2023-01-15","2023-02-20","2023-03-10"],
+            "Product":["Laptop","Mouse","Keyboard"],
+            "Quantity":[10,50,30],
+            "Price":[25000,500,800],
+            "Region":["North","South","Central"]
+        }).to_csv(fp,index=False)
 
     df = pd.read_csv(fp)
 
+    # Map ชื่อคอลัมน์เก่า → ใหม่
     column_map = {
-        "Product": "Product Name",
-        "Price": "Unit Price",
-        "product": "Product Name",
-        "price": "Unit Price"
+        "Product Name": "Product",
+        "Unit Price": "Price",
+        "Product_ID": "ProductID"
     }
 
     df = df.rename(columns=column_map)
 
-    if "Unit Price" not in df.columns and "Price" in df.columns:
-        df["Unit Price"] = df["Price"]
+    # ตรวจสอบคอลัมน์จำเป็น
+    required = ["Quantity","Price"]
+    for col in required:
+        if col not in df.columns:
+            st.error(f"Missing required column: {col}")
+            st.stop()
 
-    if "Product Name" not in df.columns and "Product" in df.columns:
-        df["Product Name"] = df["Product"]
-
+    # แปลงเป็นตัวเลข
     df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(0)
-    df["Unit Price"] = pd.to_numeric(df["Unit Price"], errors="coerce").fillna(0)
-    df["Total"] = df["Quantity"] * df["Unit Price"]
+    df["Price"] = pd.to_numeric(df["Price"], errors="coerce").fillna(0)
+
+    df["Total"] = df["Quantity"] * df["Price"]
 
     return df
 
 df = load_data()
 
 # ─────────────────────────────────────────────
-# SIDEBAR (BUILDER STYLE)
+# SIDEBAR
 # ─────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🗂 Pages")
+    st.markdown("## 🚀 DataFlow")
     page = st.radio("", [
         "Overview",
         "Data Management",
@@ -161,16 +149,6 @@ with st.sidebar:
         "Visualization",
         "Security"
     ])
-
-    st.markdown('<div class="sidebar-title">Layers</div>', unsafe_allow_html=True)
-    st.checkbox("Navigation")
-    st.checkbox("Header")
-    st.checkbox("Charts")
-    st.checkbox("Tables")
-
-    st.markdown('<div class="sidebar-title">Assets</div>', unsafe_allow_html=True)
-    st.button("Upload Image")
-    st.button("Import Data")
 
 # ─────────────────────────────────────────────
 # KPI HELPER
@@ -184,66 +162,137 @@ def show_kpi(label,value):
     """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# PAGES
+# OVERVIEW
 # ─────────────────────────────────────────────
-st.markdown('<div class="canvas-card">', unsafe_allow_html=True)
-
 if page == "Overview":
     st.title("Overview")
 
     c1,c2,c3,c4 = st.columns(4)
     with c1: show_kpi("Revenue",f"฿{df['Total'].sum():,.0f}")
     with c2: show_kpi("Orders",len(df))
-    with c3: show_kpi("Products",df["Product Name"].nunique())
-    with c4: show_kpi("Regions",df["Region"].nunique())
+    with c3: show_kpi("Products",df["Product"].nunique() if "Product" in df.columns else "-")
+    with c4: show_kpi("Regions",df["Region"].nunique() if "Region" in df.columns else "-")
 
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    st.markdown('<div class="card">',unsafe_allow_html=True)
     monthly = df.groupby("Date")["Total"].sum()
     fig,ax = plt.subplots()
     ax.plot(monthly.index,monthly.values)
     ax.set_title("Sales Trend")
     ax.tick_params(axis='x',rotation=45)
     st.pyplot(fig,use_container_width=True)
-
+    st.markdown('</div>',unsafe_allow_html=True)
+st.markdown("""
+<div class="topbar-dark">
+    <div style="font-weight:600;">🧩 DataFlow Builder</div>
+    <div style="font-size:0.8rem;color:#94a3b8;">
+        Desktop · 1200px · Production Mode
+    </div>
+</div>
+""", unsafe_allow_html=True)
+# ─────────────────────────────────────────────
+# DATA MANAGEMENT
+# ─────────────────────────────────────────────
 elif page == "Data Management":
     st.title("Data Management")
-    st.dataframe(df,use_container_width=True)
 
+    with st.form("add_form"):
+        d = st.date_input("Date")
+        p = st.text_input("Product")
+        q = st.number_input("Quantity",1)
+        pr = st.number_input("Price",1)
+        r = st.text_input("Region")
+
+        if st.form_submit_button("Add Data"):
+            new = pd.DataFrame([[str(d),p,q,pr,r]],
+                               columns=["Date","Product","Quantity","Price","Region"])
+            new["Total"] = new["Quantity"]*new["Price"]
+            df2 = pd.concat([df,new], ignore_index=True)
+            df2.to_csv("sales_data.csv",index=False)
+            st.success("Data Added")
+            st.rerun()
+
+    st.markdown('<div class="card">',unsafe_allow_html=True)
+    st.dataframe(df,use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# QUALITY
+# ─────────────────────────────────────────────
 elif page == "Quality":
     st.title("Data Quality")
-    st.write("Missing Values:", df.isnull().sum().sum())
-    st.write("Duplicates:", df.duplicated().sum())
 
+    nulls = df.isnull().sum().sum()
+    dup = df.duplicated().sum()
+
+    c1,c2 = st.columns(2)
+    with c1: show_kpi("Missing Values",nulls)
+    with c2: show_kpi("Duplicates",dup)
+
+    st.markdown('<div class="card">',unsafe_allow_html=True)
+    st.dataframe(df.describe(),use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# CLEANING
+# ─────────────────────────────────────────────
 elif page == "Cleaning":
     st.title("Cleaning")
+
     if st.button("Remove Duplicates"):
-        df.drop_duplicates().to_csv("sales_data.csv",index=False)
+        df2 = df.drop_duplicates()
+        df2.to_csv("sales_data.csv",index=False)
         st.success("Duplicates Removed")
         st.rerun()
 
+    st.markdown('<div class="card">',unsafe_allow_html=True)
+    st.dataframe(df,use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# ANALYTICS
+# ─────────────────────────────────────────────
 elif page == "Analytics":
     st.title("Analytics")
+
     region = df.groupby("Region")["Total"].sum()
+
+    st.markdown('<div class="card">',unsafe_allow_html=True)
     fig,ax = plt.subplots()
     ax.bar(region.index,region.values)
     ax.set_title("Revenue by Region")
     st.pyplot(fig,use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
 
+# ─────────────────────────────────────────────
+# VISUALIZATION
+# ─────────────────────────────────────────────
 elif page == "Visualization":
     st.title("Visualization")
-    top = df.groupby("Product Name")["Quantity"].sum().sort_values()
+
+    top = df.groupby("Product")["Quantity"].sum().sort_values()
+
+    st.markdown('<div class="card">',unsafe_allow_html=True)
     fig,ax = plt.subplots()
     ax.barh(top.index,top.values)
     ax.set_title("Top Products")
     st.pyplot(fig,use_container_width=True)
+    st.markdown('</div>',unsafe_allow_html=True)
 
+# ─────────────────────────────────────────────
+# SECURITY
+# ─────────────────────────────────────────────
 elif page == "Security":
     st.title("Security")
+
     st.markdown("""
+    <div class="card">
+    <h3>Role-Based Access Control</h3>
     <ul>
         <li><b>Admin</b> – Full Access</li>
         <li><b>Analyst</b> – Data & Analytics</li>
         <li><b>Viewer</b> – Read Only</li>
     </ul>
+    </div>
     """,unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
