@@ -183,14 +183,7 @@ if page == "Overview":
     ax.tick_params(axis='x',rotation=45)
     st.pyplot(fig,use_container_width=True)
     st.markdown('</div>',unsafe_allow_html=True)
-st.markdown("""
-<div class="topbar-dark">
-    <div style="font-weight:600;">🧩 DataFlow Builder</div>
-    <div style="font-size:0.8rem;color:#94a3b8;">
-        Desktop · 1200px · Production Mode
-    </div>
-</div>
-""", unsafe_allow_html=True)
+
 # ─────────────────────────────────────────────
 # DATA MANAGEMENT
 # ─────────────────────────────────────────────
