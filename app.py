@@ -13,55 +13,28 @@ st.set_page_config(page_title="DataFlow", layout="wide", page_icon="🚀")
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
-/* ───────── Background ───────── */
 .stApp {
-    background: radial-gradient(circle at 10% 10%, #0f172a, #0b1220 60%);
-    color: #e5e7eb;
+    background: radial-gradient(circle at 20% 20%, #1e293b, #0f172a 60%);
+    color: #e2e8f0;
 }
 
-/* ───────── Sidebar Builder Panel ───────── */
 section[data-testid="stSidebar"] {
-    background: #0f172a;
+    background: #0b1220;
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Sidebar Section Titles */
-.sidebar-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: #64748b;
-    margin-top: 1rem;
-    margin-bottom: .5rem;
-}
-
-/* ───────── Top Control Bar ───────── */
-.topbar-dark {
-    background: #0b1220;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: .7rem 1.5rem;
-    margin: -2rem -2rem 1.5rem -2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* ───────── Canvas Card ───────── */
-.canvas-card {
+.card {
     background: #111827;
     border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 14px;
-    padding: 1.5rem;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    border-radius: 16px;
+    padding: 1.4rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
-/* ───────── KPI ───────── */
 .kpi {
     background: linear-gradient(145deg,#111827,#0f172a);
     border: 1px solid rgba(255,255,255,0.05);
@@ -81,12 +54,12 @@ section[data-testid="stSidebar"] {
     font-weight: 800;
 }
 
-/* Buttons */
 .stButton > button {
     background: linear-gradient(90deg,#6366f1,#8b5cf6);
     border: none;
     color: white;
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: .5rem 1.2rem;
 }
 </style>
 """, unsafe_allow_html=True)
