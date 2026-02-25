@@ -1,28 +1,21 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import os
 
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-st.set_page_config(
-    page_title="DataFlow",
-    layout="wide",
-    page_icon="🚀"
-)
+st.set_page_config(page_title="DataFlow", layout="wide", page_icon="🚀")
 
 # ─────────────────────────────────────────────
-# DARK SAAS DESIGN SYSTEM
+# DARK SAAS STYLE
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
-html, body, [class*="css"]  {
-    font-family: 'Inter', sans-serif;
-}
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 .stApp {
     background: radial-gradient(circle at 20% 20%, #1e293b, #0f172a 60%);
@@ -37,16 +30,16 @@ section[data-testid="stSidebar"] {
 .card {
     background: #111827;
     border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 18px;
-    padding: 1.5rem;
+    border-radius: 16px;
+    padding: 1.4rem;
     box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
 .kpi {
     background: linear-gradient(145deg,#111827,#0f172a);
     border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 1.2rem;
+    border-radius: 14px;
+    padding: 1rem;
 }
 
 .kpi-label {
@@ -57,13 +50,8 @@ section[data-testid="stSidebar"] {
 }
 
 .kpi-value {
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 800;
-    margin-top: .3rem;
-}
-
-h1,h2,h3 {
-    font-weight: 700;
 }
 
 .stButton > button {
@@ -73,20 +61,16 @@ h1,h2,h3 {
     border-radius: 10px;
     padding: .5rem 1.2rem;
 }
-
-.stDataFrame, .stTable {
-    border-radius: 14px !important;
-    overflow: hidden !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# DATA
+# SAFE DATA LOADER (รองรับหลาย schema)
 # ─────────────────────────────────────────────
 def load_data():
     fp = "sales_data.csv"
+
+    # ถ้าไม่มีไฟล์ สร้าง default
     if not os.path.exists(fp):
         pd.DataFrame({
             "Date":["2023-01-15","2023-02-20","2023-03-10"],
@@ -95,32 +79,60 @@ def load_data():
             "Price":[25000,500,800],
             "Region":["North","South","Central"]
         }).to_csv(fp,index=False)
-    return pd.read_csv(fp)
+
+    df = pd.read_csv(fp)
+
+    # Map ชื่อคอลัมน์เก่า → ใหม่
+    column_map = {
+        "Product Name": "Product",
+        "Unit Price": "Price",
+        "Product_ID": "ProductID"
+    }
+
+    df = df.rename(columns=column_map)
+
+    # ตรวจสอบคอลัมน์จำเป็น
+    required = ["Quantity","Price"]
+    for col in required:
+        if col not in df.columns:
+            st.error(f"Missing required column: {col}")
+            st.stop()
+
+    # แปลงเป็นตัวเลข
+    df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(0)
+    df["Price"] = pd.to_numeric(df["Price"], errors="coerce").fillna(0)
+
+    df["Total"] = df["Quantity"] * df["Price"]
+
+    return df
 
 df = load_data()
 
-df["Total"] = df["Quantity"] * df["Price"]
-
 # ─────────────────────────────────────────────
-# SIDEBAR NAV
+# SIDEBAR
 # ─────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🚀 DataFlow")
-    page = st.radio(
-        "",
-        ["Overview","Data","Quality","Cleaning","Analytics","Visualization","Security"]
-    )
+    page = st.radio("", [
+        "Overview",
+        "Data Management",
+        "Quality",
+        "Cleaning",
+        "Analytics",
+        "Visualization",
+        "Security"
+    ])
 
 # ─────────────────────────────────────────────
-# KPI FUNCTION
+# KPI HELPER
 # ─────────────────────────────────────────────
-def kpi(label,value):
+def show_kpi(label,value):
     st.markdown(f"""
     <div class="kpi">
         <div class="kpi-label">{label}</div>
         <div class="kpi-value">{value}</div>
     </div>
-    """,unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # OVERVIEW
@@ -128,41 +140,43 @@ def kpi(label,value):
 if page == "Overview":
     st.title("Overview")
 
-    col1,col2,col3,col4 = st.columns(4)
-    col1.markdown(kpi("Revenue",f"฿{df['Total'].sum():,.0f}"),unsafe_allow_html=True)
-    col2.markdown(kpi("Orders",len(df)),unsafe_allow_html=True)
-    col3.markdown(kpi("Products",df["Product"].nunique()),unsafe_allow_html=True)
-    col4.markdown(kpi("Regions",df["Region"].nunique()),unsafe_allow_html=True)
+    c1,c2,c3,c4 = st.columns(4)
+    with c1: show_kpi("Revenue",f"฿{df['Total'].sum():,.0f}")
+    with c2: show_kpi("Orders",len(df))
+    with c3: show_kpi("Products",df["Product"].nunique() if "Product" in df.columns else "-")
+    with c4: show_kpi("Regions",df["Region"].nunique() if "Region" in df.columns else "-")
 
     st.markdown("<br>",unsafe_allow_html=True)
 
     st.markdown('<div class="card">',unsafe_allow_html=True)
     monthly = df.groupby("Date")["Total"].sum()
     fig,ax = plt.subplots()
-    ax.plot(monthly.index,monthly.values,linewidth=2)
+    ax.plot(monthly.index,monthly.values)
     ax.set_title("Sales Trend")
     ax.tick_params(axis='x',rotation=45)
     st.pyplot(fig,use_container_width=True)
-    st.markdown("</div>",unsafe_allow_html=True)
+    st.markdown('</div>',unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # DATA MANAGEMENT
 # ─────────────────────────────────────────────
-elif page == "Data":
+elif page == "Data Management":
     st.title("Data Management")
 
-    with st.form("add"):
+    with st.form("add_form"):
         d = st.date_input("Date")
         p = st.text_input("Product")
         q = st.number_input("Quantity",1)
         pr = st.number_input("Price",1)
         r = st.text_input("Region")
-        if st.form_submit_button("Add"):
-            new = pd.DataFrame([[str(d),p,q,pr,r]],columns=df.columns[:-1])
-            new["Total"]=new["Quantity"]*new["Price"]
-            df2 = pd.concat([df,new])
+
+        if st.form_submit_button("Add Data"):
+            new = pd.DataFrame([[str(d),p,q,pr,r]],
+                               columns=["Date","Product","Quantity","Price","Region"])
+            new["Total"] = new["Quantity"]*new["Price"]
+            df2 = pd.concat([df,new], ignore_index=True)
             df2.to_csv("sales_data.csv",index=False)
-            st.success("Added")
+            st.success("Data Added")
             st.rerun()
 
     st.markdown('<div class="card">',unsafe_allow_html=True)
@@ -178,9 +192,9 @@ elif page == "Quality":
     nulls = df.isnull().sum().sum()
     dup = df.duplicated().sum()
 
-    col1,col2 = st.columns(2)
-    col1.markdown(kpi("Missing",nulls),unsafe_allow_html=True)
-    col2.markdown(kpi("Duplicates",dup),unsafe_allow_html=True)
+    c1,c2 = st.columns(2)
+    with c1: show_kpi("Missing Values",nulls)
+    with c2: show_kpi("Duplicates",dup)
 
     st.markdown('<div class="card">',unsafe_allow_html=True)
     st.dataframe(df.describe(),use_container_width=True)
@@ -195,7 +209,7 @@ elif page == "Cleaning":
     if st.button("Remove Duplicates"):
         df2 = df.drop_duplicates()
         df2.to_csv("sales_data.csv",index=False)
-        st.success("Cleaned")
+        st.success("Duplicates Removed")
         st.rerun()
 
     st.markdown('<div class="card">',unsafe_allow_html=True)
@@ -240,11 +254,11 @@ elif page == "Security":
 
     st.markdown("""
     <div class="card">
-    <h3>Role Based Access</h3>
+    <h3>Role-Based Access Control</h3>
     <ul>
-    <li>Admin – Full Access</li>
-    <li>Analyst – Data & Analytics</li>
-    <li>Viewer – Read Only</li>
+        <li><b>Admin</b> – Full Access</li>
+        <li><b>Analyst</b> – Data & Analytics</li>
+        <li><b>Viewer</b> – Read Only</li>
     </ul>
     </div>
     """,unsafe_allow_html=True)
